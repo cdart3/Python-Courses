@@ -1,6 +1,9 @@
-# Take in the url of a newspaper article and automatically summarize it in 3 sentences
-# This exercise is based pretty much entirely off this blog post:
-# http://glowingpython.blogspot.in/2014/09/text-summarization-with-nltk.html
+#!/usr/bin/python
+''' Multiline comment example
+Take in the url of a newspaper article and automatically summarize it in 3 sentences
+This exercise is based pretty much entirely off this blog post:
+http://glowingpython.blogspot.in/2014/09/text-summarization-with-nltk.html
+'''
 
 from nltk.tokenize import sent_tokenize as st, word_tokenize as wt
 from nltk.corpus import stopwords
@@ -10,11 +13,16 @@ from heapq import nlargest
 import urllib2
 from bs4 import BeautifulSoup
 
-
-# Step 1: Download contents of url
-
 def getWashPostText(url):
-	# This is specific to Washington Post, because of the html/CSS structure
+	""""
+	This is specific to Washington Post, because of the html/CSS structure
+	Algorithm:
+		1. downloads contents of url using try catch
+		2. extracts article from html
+		3. fetch everything betweeen article tags
+		4. grab innerHTML from p tags
+	returns article title and article body
+	"""
 
 	try:
 
@@ -23,20 +31,13 @@ def getWashPostText(url):
 	except:
 		return (None,None)
 
-	# Step 2: Extract the article from all other html
-
-	soup = BeautifulSoup(page)
+	soup = BeautifulSoup(page, "html.parser") # Beautiful soup threw me a warning to add "html.parser" as a second param
 	if soup is None:
 		return (None, None)
 
 	text = ' '.join(map(lambda p: p.text, soup.find_all('article')))
-	# This will fetch everything betweeen article tags
-
-	soup2 = BeautifulSoup(text)
-
-	text = ' '.join(map(lambda p: p.text, soup2.find_all('p')))
-	# This will fetch everything within the article tag that has a p tag
-
+	soup2 = BeautifulSoup(text, "html.parser") # See comment above
+	p_tags = ' '.join(map(lambda p: p.text, soup2.find_all('p')))
 	return soup.title.text, text
 
 # Step 3: Figure out the 3 most important sentences in the article
@@ -87,10 +88,30 @@ class FrequencySummarizer:
 					ranking[i] += self._freq[word]
 
 		sents_idx = nlargest(n,ranking, key = ranking.get)
-		print [sents[j] for j in sents_idx]
+		return [sents[j] for j in sents_idx] # sexy list comprehension
 
-someUrl = "https://www.washingtonpost.com/news/the-switch/wp/2016/05/02/hulu-may-soon-offer-live-tv-including-sports/"
+	def print_summary(self,summary):
+		'''
+		TODO: define this in class -> def __str__(self):
+		given output of summarize()
+		returns as string
+		no return
+		'''
+		for line in summary:
+			print line
 
-someText = getWashPostText(someUrl)
-fs = FrequencySummarizer()
-summary = fs.summarize(someText[1], 3)
+def main():
+	wp_url = "https://www.washingtonpost.com/news/the-switch/wp/2016/05/02/hulu-may-soon-offer-live-tv-including-sports/"
+	wp_text = getWashPostText(wp_url)
+	fs = FrequencySummarizer()
+	summary = fs.summarize(wp_text[1], 3)
+	fs.print_summary(summary)
+
+'''
+if you chmod u+x file_name and have the lines below
+you can use ./autosummarize to run this program 
+instead of 
+python program name
+'''
+if __name__ == '__main__':
+	main()
